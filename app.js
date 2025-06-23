@@ -1,24 +1,115 @@
-// Play Puck App Logic
+// Play Puck Multiplayer App using Firebase (Modular SDK)
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getDatabase, ref, get, set, update, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC-97nwZNJphsmhGEq_Idg7gsxuYXfAlh0",
+  authDomain: "play-puck.firebaseapp.com",
+  projectId: "play-puck",
+  storageBucket: "play-puck.firebasestorage.app",
+  messagingSenderId: "173028734286",
+  appId: "1:173028734286:web:c341cbf3e4274c733b1a1f",
+  measurementId: "G-M85TY7H4LB"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 let deck = [];
 let discardPile = [];
 let playerHand = [];
 let opponentHand = [];
-let currentPlayer = "player"; // player starts
 let playerScore = 0;
 let opponentScore = 0;
+let currentPlayer = null;
 
-// Load card data from JSON
-fetch('cards.json')
-  .then(res => res.json())
-  .then(data => {
-    deck = shuffle([...data]);
-    playerHand = deck.splice(0, 3);
-    opponentHand = deck.splice(0, 3);
-    renderHand('player-hand', playerHand);
-    // opponent-hand remains hidden
-    log("Game start! You go first.");
-  });
+const playerId = Math.random().toString(36).substring(2, 10);
+const matchId = prompt("Enter match ID to join or create:");
+const matchRef = ref(db, `matches/${matchId}`);
+let isHost = false;
+
+get(matchRef).then(snapshot => {
+  const data = snapshot.val();
+
+  if (!data) {
+    isHost = true;
+    set(matchRef, {
+      players: { [playerId]: true },
+      state: "waiting",
+      currentPlayer: playerId,
+      deck: [],
+      discardPile: [],
+      scores: { [playerId]: 0 }
+    });
+    log("Waiting for opponent...");
+  } else if (data.players && Object.keys(data.players).length < 2) {
+    update(ref(db, `matches/${matchId}/players`), { [playerId]: true });
+    update(ref(db, `matches/${matchId}/scores`), { [playerId]: 0 });
+    log("Joined match. Waiting for host to start...");
+  } else {
+    alert("Match full!");
+  }
+});
+
+// Realtime updates
+onValue(matchRef, snapshot => {
+  const data = snapshot.val();
+  if (!data) return;
+
+  currentPlayer = data.currentPlayer;
+
+  if (data.state === "started") {
+    log("Game started!");
+    if (!deck.length) {
+      deck = data.deck;
+      discardPile = data.discardPile || [];
+      if (data.hands && data.hands[playerId]) {
+        playerHand = data.hands[playerId];
+        renderHand("player-hand", playerHand);
+      }
+    }
+  }
+
+  if (data.scores) {
+    const opponentId = Object.keys(data.players).find(id => id !== playerId);
+    playerScore = data.scores[playerId] || 0;
+    opponentScore = data.scores[opponentId] || 0;
+    document.getElementById("player-score").textContent = `Score: ${playerScore}`;
+    document.getElementById("opponent-score").textContent = `Score: ${opponentScore}`;
+  }
+});
+
+// Host starts the game
+function startGame() {
+  fetch("cards.json")
+    .then(res => res.json())
+    .then(cards => {
+      const shuffled = shuffle([...cards]);
+      const p1 = shuffled.splice(0, 3);
+      const p2 = shuffled.splice(0, 3);
+      const hands = {};
+      hands[playerId] = p1;
+
+      const opponentId = Object.keys((snapshot.val()?.players || {})).find(id => id !== playerId);
+      if (opponentId) {
+        hands[opponentId] = p2;
+      }
+
+      set(matchRef, {
+        ...snapshot.val(),
+        state: "started",
+        deck: shuffled,
+        discardPile: [],
+        currentPlayer: playerId,
+        hands,
+        scores: { [playerId]: 0, [opponentId]: 0 }
+      });
+
+      playerHand = p1;
+      renderHand("player-hand", playerHand);
+    });
+}
 
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -32,8 +123,8 @@ function renderHand(containerId, hand) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
   hand.forEach((card, index) => {
-    const cardEl = document.createElement('div');
-    cardEl.className = 'card';
+    const cardEl = document.createElement("div");
+    cardEl.className = "card";
     cardEl.textContent = card.name;
     cardEl.onclick = () => playCard(index);
     container.appendChild(cardEl);
@@ -41,143 +132,74 @@ function renderHand(containerId, hand) {
 }
 
 function playCard(index) {
-  if (currentPlayer !== "player") return;
+  if (currentPlayer !== playerId) {
+    log("It's not your turn.");
+    return;
+  }
 
   const card = playerHand.splice(index, 1)[0];
   discardPile.push(card);
   log(`You played: ${card.name} — ${card.effect}`);
-  renderHand('player-hand', playerHand);
+  renderHand("player-hand", playerHand);
+  update(matchRef, {
+    discardPile,
+    [`hands/${playerId}`]: playerHand
+  });
+
   const roll = rollDice();
   resolvePlay(card, roll);
 }
 
-function drawCard(hand) {
-  if (deck.length === 0) {
-    deck = shuffle([...discardPile]);
-    discardPile = [];
-    log('Deck reshuffled.');
-  }
-  if (deck.length > 0) {
-    hand.push(deck.shift());
-    if (hand === playerHand) {
-      renderHand('player-hand', playerHand);
-    }
-  }
-}
-
 function rollDice() {
   const roll = Math.floor(Math.random() * 6 + 1) + Math.floor(Math.random() * 6 + 1);
-  document.getElementById('dice-result').textContent = roll;
+  document.getElementById("dice-result").textContent = roll;
   return roll;
 }
 
 function resolvePlay(card, roll) {
   if (card.base === "miss" || roll > 12) {
     log("Shot went out of bounds!");
-    switchTurn();
+    passTurn();
     return;
   }
 
   if (roll >= 3) {
     log("GOAL!");
-    if (currentPlayer === "player") {
-      playerScore++;
-      document.getElementById("player-score").textContent = `Score: ${playerScore}`;
-    } else {
-      opponentScore++;
-      document.getElementById("opponent-score").textContent = `Score: ${opponentScore}`;
-    }
+    playerScore++;
+    update(matchRef, {
+      [`scores/${playerId}`]: playerScore
+    });
 
-    // ✅ End game check
-    if (playerScore >= 7 || opponentScore >= 7) {
-      const winner = playerScore >= 7 ? "🎉 You Win!" : "😵 Opponent Wins!";
-      log(`🏁 Game Over — ${winner}`);
-      currentPlayer = null;
-      disablePlayerControls();
-
-      document.getElementById("restart-button").style.display = "inline-block";
-      
+    if (playerScore >= 7) {
+      log("🏁 Game Over — You Win!");
       return;
     }
 
-    switchTurn(true); // goal scored = give puck to opponent
+    passTurn(true);
   } else {
     log("No goal. Turn passes.");
-    switchTurn();
+    passTurn();
   }
 }
 
-function disablePlayerControls() {
-  document.getElementById('draw-button').disabled = true;
-
-  const handContainer = document.getElementById('player-hand');
-  const cards = handContainer.querySelectorAll('.card');
-  cards.forEach(card => {
-    card.onclick = null;
-    card.style.cursor = "not-allowed";
-    card.style.opacity = 0.5;
+function passTurn(goalScored = false) {
+  get(matchRef).then(snapshot => {
+    const data = snapshot.val();
+    const opponentId = Object.keys(data.players).find(id => id !== playerId);
+    update(matchRef, {
+      currentPlayer: opponentId
+    });
   });
 }
 
-function switchTurn(goalScored = false) {
-  currentPlayer = currentPlayer === "player" ? "opponent" : "player";
-  log(`Turn: ${currentPlayer.toUpperCase()}`);
-
-  if (currentPlayer === "opponent") {
-    setTimeout(opponentTurn, 1000);
-  }
-}
-
-function opponentTurn() {
-  const card = opponentHand.shift();
-  discardPile.push(card);
-  log(`Opponent played: ${card.name} — ${card.effect}`);
-  drawCard(opponentHand);
-  const roll = rollDice();
-  resolvePlay(card, roll);
-}
-
 function log(message) {
-  const logEl = document.getElementById('log');
-  const entry = document.createElement('div');
+  const logEl = document.getElementById("log");
+  const entry = document.createElement("div");
   entry.textContent = message;
   logEl.appendChild(entry);
   logEl.scrollTop = logEl.scrollHeight;
 }
 
-document.getElementById('draw-button').addEventListener('click', () => {
-  if (currentPlayer === "player") {
-    drawCard(playerHand);
-  }
+document.getElementById("draw-button").addEventListener("click", () => {
+  log("Draw manually disabled in multiplayer mode.");
 });
-
-document.getElementById('restart-button').addEventListener('click', () => {
-  // Reset all game state
-  playerScore = 0;
-  opponentScore = 0;
-  deck = [];
-  discardPile = [];
-  playerHand = [];
-  opponentHand = [];
-  currentPlayer = "player";
-
-  // Reset UI
-  document.getElementById("player-score").textContent = "Score: 0";
-  document.getElementById("opponent-score").textContent = "Score: 0";
-  document.getElementById("draw-button").disabled = false;
-  document.getElementById("log").innerHTML = "";
-  document.getElementById("dice-result").textContent = "--";
-  document.getElementById("restart-button").style.display = "none";
-
-  // Reload deck and deal new hands
-  fetch('cards.json')
-    .then(res => res.json())
-    .then(data => {
-      deck = shuffle([...data]);
-      playerHand = deck.splice(0, 3);
-      opponentHand = deck.splice(0, 3);
-      renderHand('player-hand', playerHand);
-      log("New game started! You go first.");
-    });
-});
-

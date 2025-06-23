@@ -1,0 +1,110 @@
+[
+  {
+    "name": "CROSS",
+    "type": "shot",
+    "base": "cross",
+    "effect": "Deceptive straight shot based on left-wall motion"
+  },
+  {
+    "name": "CUT",
+    "type": "shot",
+    "base": "cut",
+    "effect": "Straight shot using right-wall motion to fake out defense"
+  },
+  {
+    "name": "doublebank",
+    "type": "shot",
+    "base": "double bank",
+    "effect": "Shot bounces off 2 walls before reaching goal"
+  },
+  {
+    "name": "drift",
+    "type": "modifier",
+    "base": "drift",
+    "effect": "Sets up a deceptive stop-and-go shot on next turn"
+  },
+  {
+    "name": "lossofmallet",
+    "type": "special",
+    "base": "disarm",
+    "effect": "Opponent cannot play defense card this turn"
+  },
+  {
+    "name": "LWO",
+    "type": "shot",
+    "base": "left wall over",
+    "effect": "Slow deceptive shot banking off left wall to hit right side"
+  },
+  {
+    "name": "LWU",
+    "type": "shot",
+    "base": "left wall under",
+    "effect": "Power shot banking off left wall to hit left side"
+  },
+  {
+    "name": "offgoal",
+    "type": "shot",
+    "base": "miss",
+    "effect": "Misses target; no score, may result in turnover"
+  },
+  {
+    "name": "possession",
+    "type": "special",
+    "base": "steal",
+    "effect": "Gain puck control immediately"
+  },
+  {
+    "name": "potshot",
+    "type": "shot",
+    "base": "quick",
+    "effect": "Fast shot with +1 to dice roll, ignores drift effects"
+  },
+  {
+    "name": "RWO",
+    "type": "shot",
+    "base": "right wall over",
+    "effect": "Deceptive bank to left side of goal"
+  },
+  {
+    "name": "RWU",
+    "type": "shot",
+    "base": "right wall under",
+    "effect": "High velocity shot banking off right wall to hit right side"
+  },
+  {
+    "name": "snag",
+    "type": "defense",
+    "base": "intercept",
+    "effect": "Cancel one incoming offensive card"
+  },
+  {
+    "name": "timedelay",
+    "type": "modifier",
+    "base": "delay",
+    "effect": "Opponent draws 1 less card next turn"
+  },
+  {
+    "name": "timeout",
+    "type": "special",
+    "base": "pause",
+    "effect": "End your turn and draw 1 extra card"
+  },
+  {
+    "name": "transition",
+    "type": "modifier",
+    "base": "swap",
+    "effect": "Swap offensive/defensive roles"
+  },
+  {
+    "name": "triplebank",
+    "type": "shot",
+    "base": "triple bank",
+    "effect": "Extremely risky 3-wall shot, +2 to dice roll if succeeds"
+  },
+  {
+    "name": "turkeyshot",
+    "type": "shot",
+    "base": "mimic",
+    "effect": "Can copy any base shot card when revealed"
+  }
+]

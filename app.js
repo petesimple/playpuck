@@ -204,3 +204,11 @@ function log(message) {
 document.getElementById("draw-button").addEventListener("click", () => {
   log("Draw manually disabled in multiplayer mode.");
 });
+
+document.getElementById("start-button").addEventListener("click", () => {
+  if (isHost) {
+    startGame();
+  } else {
+    log("Only the host can start the game.");
+  }
+});

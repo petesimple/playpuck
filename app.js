@@ -94,6 +94,9 @@ function resolvePlay(card, roll) {
       log(`🏁 Game Over — ${winner}`);
       currentPlayer = null;
       disablePlayerControls();
+
+      document.getElementById("restart-button").style.display = "inline-block";
+      
       return;
     }
 
@@ -147,3 +150,34 @@ document.getElementById('draw-button').addEventListener('click', () => {
     drawCard(playerHand);
   }
 });
+
+document.getElementById('restart-button').addEventListener('click', () => {
+  // Reset all game state
+  playerScore = 0;
+  opponentScore = 0;
+  deck = [];
+  discardPile = [];
+  playerHand = [];
+  opponentHand = [];
+  currentPlayer = "player";
+
+  // Reset UI
+  document.getElementById("player-score").textContent = "Score: 0";
+  document.getElementById("opponent-score").textContent = "Score: 0";
+  document.getElementById("draw-button").disabled = false;
+  document.getElementById("log").innerHTML = "";
+  document.getElementById("dice-result").textContent = "--";
+  document.getElementById("restart-button").style.display = "none";
+
+  // Reload deck and deal new hands
+  fetch('cards.json')
+    .then(res => res.json())
+    .then(data => {
+      deck = shuffle([...data]);
+      playerHand = deck.splice(0, 3);
+      opponentHand = deck.splice(0, 3);
+      renderHand('player-hand', playerHand);
+      log("New game started! You go first.");
+    });
+});
+

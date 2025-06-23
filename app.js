@@ -1,4 +1,4 @@
-// Play Puck Multiplayer App using Firebase (Modular SDK)
+// Play Puck Multiplayer App using Firebase (Fixed Edition)
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { getDatabase, ref, get, set, update, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
@@ -24,6 +24,7 @@ let opponentHand = [];
 let playerScore = 0;
 let opponentScore = 0;
 let currentPlayer = null;
+let hasStarted = false;
 
 const playerId = Math.random().toString(36).substring(2, 10);
 const matchId = prompt("Enter match ID to join or create:");
@@ -53,15 +54,16 @@ get(matchRef).then(snapshot => {
   }
 });
 
-// Realtime updates
 onValue(matchRef, snapshot => {
   const data = snapshot.val();
   if (!data) return;
 
   currentPlayer = data.currentPlayer;
 
-  if (data.state === "started") {
+  if (data.state === "started" && !hasStarted) {
+    hasStarted = true;
     log("Game started!");
+
     if (!deck.length) {
       deck = data.deck;
       discardPile = data.discardPile || [];
@@ -81,7 +83,6 @@ onValue(matchRef, snapshot => {
   }
 });
 
-// Host starts the game
 function startGame() {
   fetch("cards.json")
     .then(res => res.json())
@@ -140,7 +141,7 @@ function renderHand(containerId, hand) {
 }
 
 function playCard(index) {
-  if (currentPlayer !== playerId) {
+  if (!hasStarted || currentPlayer !== playerId) {
     log("It's not your turn.");
     return;
   }
@@ -149,6 +150,7 @@ function playCard(index) {
   discardPile.push(card);
   log(`You played: ${card.name} — ${card.effect}`);
   renderHand("player-hand", playerHand);
+
   update(matchRef, {
     discardPile,
     [`hands/${playerId}`]: playerHand
@@ -212,7 +214,7 @@ document.getElementById("draw-button").addEventListener("click", () => {
   log("Draw manually disabled in multiplayer mode.");
 });
 
-document.getElementById("start-button").addEventListener("click", () => {
+document.getElementById("start-button")?.addEventListener("click", () => {
   if (isHost) {
     startGame();
   } else {

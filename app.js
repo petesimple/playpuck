@@ -6,6 +6,7 @@ import { getDatabase, ref, get, set, update, onValue } from "https://www.gstatic
 const firebaseConfig = {
   apiKey: "AIzaSyC-97nwZNJphsmhGEq_Idg7gsxuYXfAlh0",
   authDomain: "play-puck.firebaseapp.com",
+  databaseURL: "https://play-puck-default-rtdb.firebaseio.com",
   projectId: "play-puck",
   storageBucket: "play-puck.firebasestorage.app",
   messagingSenderId: "173028734286",

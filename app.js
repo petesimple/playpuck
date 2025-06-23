@@ -88,9 +88,12 @@ function resolvePlay(card, roll) {
       document.getElementById("opponent-score").textContent = `Score: ${opponentScore}`;
     }
 
+    // ✅ End game check
     if (playerScore >= 7 || opponentScore >= 7) {
-      log(`Game Over — ${playerScore >= 7 ? "You Win!" : "Opponent Wins!"}`);
+      const winner = playerScore >= 7 ? "🎉 You Win!" : "😵 Opponent Wins!";
+      log(`🏁 Game Over — ${winner}`);
       currentPlayer = null;
+      disablePlayerControls();
       return;
     }
 
@@ -99,6 +102,18 @@ function resolvePlay(card, roll) {
     log("No goal. Turn passes.");
     switchTurn();
   }
+}
+
+function disablePlayerControls() {
+  document.getElementById('draw-button').disabled = true;
+
+  const handContainer = document.getElementById('player-hand');
+  const cards = handContainer.querySelectorAll('.card');
+  cards.forEach(card => {
+    card.onclick = null;
+    card.style.cursor = "not-allowed";
+    card.style.opacity = 0.5;
+  });
 }
 
 function switchTurn(goalScored = false) {

@@ -89,26 +89,33 @@ function startGame() {
       const shuffled = shuffle([...cards]);
       const p1 = shuffled.splice(0, 3);
       const p2 = shuffled.splice(0, 3);
+
       const hands = {};
       hands[playerId] = p1;
 
-      const opponentId = Object.keys((snapshot.val()?.players || {})).find(id => id !== playerId);
-      if (opponentId) {
-        hands[opponentId] = p2;
-      }
+      get(matchRef).then(snap => {
+        const data = snap.val();
+        const opponentId = Object.keys(data.players).find(id => id !== playerId);
+        if (opponentId) {
+          hands[opponentId] = p2;
+        }
 
-      set(matchRef, {
-        ...snapshot.val(),
-        state: "started",
-        deck: shuffled,
-        discardPile: [],
-        currentPlayer: playerId,
-        hands,
-        scores: { [playerId]: 0, [opponentId]: 0 }
+        set(matchRef, {
+          players: data.players,
+          state: "started",
+          currentPlayer: playerId,
+          deck: shuffled,
+          discardPile: [],
+          hands,
+          scores: {
+            [playerId]: 0,
+            [opponentId]: 0
+          }
+        });
+
+        playerHand = p1;
+        renderHand("player-hand", playerHand);
       });
-
-      playerHand = p1;
-      renderHand("player-hand", playerHand);
     });
 }
 

@@ -195,29 +195,31 @@ function resolvePlay(card, roll) {
 function drawCard(targetPlayerId) {
   get(matchRef).then(snapshot => {
     const data = snapshot.val();
+    if (!data) return;
+
     let currentDeck = [...(data.deck || [])];
     let currentDiscard = [...(data.discardPile || [])];
-    const hands = data.hands || {};
-    const currentHand = hands[targetPlayerId] || [];
+    const hands = { ...data.hands };
+    const hand = hands[targetPlayerId] || [];
 
-    // 🚫 Don't draw if already have 3 cards
-    if (currentHand.length >= 3) return;
+    // ⛔ Enforce max hand size
+    if (hand.length >= 3) return;
 
-    // ♻️ Reshuffle discard pile if deck is empty
+    // ♻️ If deck is empty, reshuffle discard pile
     if (currentDeck.length === 0 && currentDiscard.length > 0) {
       currentDeck = shuffle(currentDiscard);
       currentDiscard = [];
     }
 
-    // ✅ Draw one card
     if (currentDeck.length > 0) {
-      const drawn = currentDeck.shift();
-      const newHand = [...currentHand, drawn];
+      const drawnCard = currentDeck.shift();
+      const newHand = [...hand, drawnCard];
+      hands[targetPlayerId] = newHand;
 
       update(matchRef, {
         deck: currentDeck,
         discardPile: currentDiscard,
-        [`hands/${targetPlayerId}`]: newHand
+        hands: hands
       });
 
       if (targetPlayerId === playerId) {
@@ -228,15 +230,18 @@ function drawCard(targetPlayerId) {
   });
 }
 
-function passTurn(goalScored = false) {
+function passTurn() {
   get(matchRef).then(snapshot => {
     const data = snapshot.val();
     const opponentId = Object.keys(data.players).find(id => id !== playerId);
     const nextPlayer = currentPlayer === playerId ? opponentId : playerId;
 
-    update(matchRef, { currentPlayer: nextPlayer });
-
-    drawCard(nextPlayer); // 👈 Give next player a new card
+    update(matchRef, {
+      currentPlayer: nextPlayer
+    }).then(() => {
+      // Draw card for next player AFTER turn has been set
+      drawCard(nextPlayer);
+    });
   });
 }
 

@@ -7,25 +7,33 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="game">
-    <div id="opponent-area">
-      <div id="opponent-hand"></div>
+  <div id="game-container">
+    <!-- Opponent Area -->
+    <section id="opponent-area">
+      <h2>Opponent</h2>
+      <div id="opponent-hand" class="hand"></div>
       <div id="opponent-score">Score: 0</div>
-    </div>
+    </section>
 
-    <div id="board">
-      <div id="puck"></div>
-      <div id="mallets">
-        <div class="mallet" id="mallet-left"></div>
-        <div class="mallet" id="mallet-right"></div>
+    <!-- Game Board -->
+    <section id="board">
+      <div id="table-card">Table Modifier</div>
+      <div id="puck-area">
+        <div id="mallet-left" class="mallet">🟠</div>
+        <div id="puck">🏒</div>
+        <div id="mallet-right" class="mallet">🔵</div>
       </div>
-      <div id="dice">🎲</div>
-    </div>
+      <div id="dice-area">🎲 <span id="dice-result">--</span></div>
+      <div id="log"></div>
+    </section>
 
-    <div id="player-area">
-      <div id="player-hand"></div>
+    <!-- Player Area -->
+    <section id="player-area">
+      <h2>You</h2>
+      <div id="player-hand" class="hand"></div>
       <div id="player-score">Score: 0</div>
-    </div>
+      <button id="draw-button">Draw Card</button>
+    </section>
   </div>
 
   <script src="app.js"></script>

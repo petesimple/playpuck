@@ -192,13 +192,51 @@ function resolvePlay(card, roll) {
   }
 }
 
+function drawCard(targetPlayerId) {
+  get(matchRef).then(snapshot => {
+    const data = snapshot.val();
+    let currentDeck = [...(data.deck || [])];
+    let currentDiscard = [...(data.discardPile || [])];
+    const hands = data.hands || {};
+    const currentHand = hands[targetPlayerId] || [];
+
+    // 🚫 Don't draw if already have 3 cards
+    if (currentHand.length >= 3) return;
+
+    // ♻️ Reshuffle discard pile if deck is empty
+    if (currentDeck.length === 0 && currentDiscard.length > 0) {
+      currentDeck = shuffle(currentDiscard);
+      currentDiscard = [];
+    }
+
+    // ✅ Draw one card
+    if (currentDeck.length > 0) {
+      const drawn = currentDeck.shift();
+      const newHand = [...currentHand, drawn];
+
+      update(matchRef, {
+        deck: currentDeck,
+        discardPile: currentDiscard,
+        [`hands/${targetPlayerId}`]: newHand
+      });
+
+      if (targetPlayerId === playerId) {
+        playerHand = newHand;
+        renderHand("player-hand", playerHand);
+      }
+    }
+  });
+}
+
 function passTurn(goalScored = false) {
   get(matchRef).then(snapshot => {
     const data = snapshot.val();
     const opponentId = Object.keys(data.players).find(id => id !== playerId);
-    update(matchRef, {
-      currentPlayer: opponentId
-    });
+    const nextPlayer = currentPlayer === playerId ? opponentId : playerId;
+
+    update(matchRef, { currentPlayer: nextPlayer });
+
+    drawCard(nextPlayer); // 👈 Give next player a new card
   });
 }
 

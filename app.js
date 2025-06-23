@@ -4,6 +4,9 @@ let deck = [];
 let discardPile = [];
 let playerHand = [];
 let opponentHand = [];
+let currentPlayer = "player"; // player starts
+let playerScore = 0;
+let opponentScore = 0;
 
 // Load card data from JSON
 fetch('cards.json')
@@ -14,6 +17,7 @@ fetch('cards.json')
     opponentHand = deck.splice(0, 3);
     renderHand('player-hand', playerHand);
     // opponent-hand remains hidden
+    log("Game start! You go first.");
   });
 
 function shuffle(array) {
@@ -37,23 +41,82 @@ function renderHand(containerId, hand) {
 }
 
 function playCard(index) {
+  if (currentPlayer !== "player") return;
+
   const card = playerHand.splice(index, 1)[0];
   discardPile.push(card);
-  log(`Played: ${card.name} — ${card.effect}`);
+  log(`You played: ${card.name} — ${card.effect}`);
   renderHand('player-hand', playerHand);
-  drawCard();
+  const roll = rollDice();
+  resolvePlay(card, roll);
 }
 
-function drawCard() {
+function drawCard(hand) {
   if (deck.length === 0) {
     deck = shuffle([...discardPile]);
     discardPile = [];
     log('Deck reshuffled.');
   }
   if (deck.length > 0) {
-    playerHand.push(deck.shift());
-    renderHand('player-hand', playerHand);
+    hand.push(deck.shift());
+    if (hand === playerHand) {
+      renderHand('player-hand', playerHand);
+    }
   }
+}
+
+function rollDice() {
+  const roll = Math.floor(Math.random() * 6 + 1) + Math.floor(Math.random() * 6 + 1);
+  document.getElementById('dice-result').textContent = roll;
+  return roll;
+}
+
+function resolvePlay(card, roll) {
+  if (card.base === "miss" || roll > 12) {
+    log("Shot went out of bounds!");
+    switchTurn();
+    return;
+  }
+
+  if (roll >= 3) {
+    log("GOAL!");
+    if (currentPlayer === "player") {
+      playerScore++;
+      document.getElementById("player-score").textContent = `Score: ${playerScore}`;
+    } else {
+      opponentScore++;
+      document.getElementById("opponent-score").textContent = `Score: ${opponentScore}`;
+    }
+
+    if (playerScore >= 7 || opponentScore >= 7) {
+      log(`Game Over — ${playerScore >= 7 ? "You Win!" : "Opponent Wins!"}`);
+      currentPlayer = null;
+      return;
+    }
+
+    switchTurn(true); // goal scored = give puck to opponent
+  } else {
+    log("No goal. Turn passes.");
+    switchTurn();
+  }
+}
+
+function switchTurn(goalScored = false) {
+  currentPlayer = currentPlayer === "player" ? "opponent" : "player";
+  log(`Turn: ${currentPlayer.toUpperCase()}`);
+
+  if (currentPlayer === "opponent") {
+    setTimeout(opponentTurn, 1000);
+  }
+}
+
+function opponentTurn() {
+  const card = opponentHand.shift();
+  discardPile.push(card);
+  log(`Opponent played: ${card.name} — ${card.effect}`);
+  drawCard(opponentHand);
+  const roll = rollDice();
+  resolvePlay(card, roll);
 }
 
 function log(message) {
@@ -64,5 +127,8 @@ function log(message) {
   logEl.scrollTop = logEl.scrollHeight;
 }
 
-// Hook up draw button
-document.getElementById('draw-button').addEventListener('click', drawCard);
+document.getElementById('draw-button').addEventListener('click', () => {
+  if (currentPlayer === "player") {
+    drawCard(playerHand);
+  }
+});

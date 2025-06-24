@@ -64,6 +64,11 @@ onValue(matchRef, snapshot => {
     hasStarted = true;
     log("Game started!");
 
+    if (data.currentPlayer === playerId && hasStarted) {
+  if (playerHand.length < 3) {
+    drawCard(playerId);
+  }
+}    
     if (!deck.length) {
       deck = data.deck;
       discardPile = data.discardPile || [];

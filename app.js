@@ -54,34 +54,47 @@ get(matchRef).then(snapshot => {
   }
 });
 
+let drawCooldown = false;
+
+function safeDraw(playerId) {
+  if (drawCooldown) return;
+  drawCooldown = true;
+  setTimeout(() => (drawCooldown = false), 300);
+  drawCard(playerId);
+}
+
 onValue(matchRef, snapshot => {
   const data = snapshot.val();
   if (!data) return;
 
   currentPlayer = data.currentPlayer;
 
-  if (data.state === "started") {
-  if (!hasStarted) {
-    hasStarted = true;
-    log("Game started!");
-  }
+  // Always keep deck + discard in sync
+  deck = data.deck || [];
+  discardPile = data.discardPile || [];
 
-  // Always check hand size on your turn
-  if (data.currentPlayer === playerId && playerHand.length < 3) {
-    drawCard(playerId);
-  }
-}
-    
-    if (!deck.length) {
-      deck = data.deck;
-      discardPile = data.discardPile || [];
-      if (data.hands && data.hands[playerId]) {
-        playerHand = data.hands[playerId];
-        renderHand("player-hand", playerHand);
-      }
+  // Always update hand if changed
+  if (data.hands && data.hands[playerId]) {
+    const newHand = data.hands[playerId];
+    if (JSON.stringify(newHand) !== JSON.stringify(playerHand)) {
+      playerHand = newHand;
+      renderHand("player-hand", playerHand);
     }
   }
 
+  if (data.state === "started") {
+    if (!hasStarted) {
+      hasStarted = true;
+      log("Game started!");
+    }
+
+    // Check and draw only on your turn
+    if (data.currentPlayer === playerId && playerHand.length < 3) {
+      safeDraw(playerId);
+    }
+  }
+
+  // Score update
   if (data.scores) {
     const opponentId = Object.keys(data.players).find(id => id !== playerId);
     playerScore = data.scores[playerId] || 0;

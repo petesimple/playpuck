@@ -60,15 +60,18 @@ onValue(matchRef, snapshot => {
 
   currentPlayer = data.currentPlayer;
 
-  if (data.state === "started" && !hasStarted) {
+  if (data.state === "started") {
+  if (!hasStarted) {
     hasStarted = true;
     log("Game started!");
+  }
 
-    if (data.currentPlayer === playerId && hasStarted) {
-  if (playerHand.length < 3) {
+  // Always check hand size on your turn
+  if (data.currentPlayer === playerId && playerHand.length < 3) {
     drawCard(playerId);
   }
-}    
+}
+    
     if (!deck.length) {
       deck = data.deck;
       discardPile = data.discardPile || [];

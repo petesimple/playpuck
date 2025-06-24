@@ -25,6 +25,7 @@ let playerScore = 0;
 let opponentScore = 0;
 let currentPlayer = null;
 let hasStarted = false;
+let drawCooldown = false;
 
 const playerId = Math.random().toString(36).substring(2, 10);
 const matchId = prompt("Enter match ID to join or create:");
@@ -53,8 +54,6 @@ get(matchRef).then(snapshot => {
     alert("Match full!");
   }
 });
-
-let drawCooldown = false;
 
 function safeDraw(playerId) {
   if (drawCooldown) return;

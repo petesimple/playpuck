@@ -44,6 +44,7 @@ get(matchRef).then(snapshot => {
       deck: [],
       discardPile: [],
       scores: { [playerId]: 0 }
+      createdAt: { ".sv": "timestamp" }
     });
     log("Waiting for opponent...");
   } else if (data.players && Object.keys(data.players).length < 2) {

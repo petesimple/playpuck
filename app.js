@@ -43,7 +43,7 @@ get(matchRef).then(snapshot => {
       currentPlayer: playerId,
       deck: [],
       discardPile: [],
-      scores: { [playerId]: 0 }
+      scores: { [playerId]: 0 },
       createdAt: { ".sv": "timestamp" }
     });
     log("Waiting for opponent...");

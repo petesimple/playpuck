@@ -188,29 +188,68 @@ function rollDice() {
 }
 
 function resolvePlay(card, roll) {
-  if (card.base === "miss" || roll > 12) {
-    log("Shot went out of bounds!");
-    passTurn();
-    return;
-  }
+  // Get the latest match data to evaluate effects
+  get(matchRef).then(snapshot => {
+    const data = snapshot.val();
+    if (!data) return;
 
-  if (roll >= 3) {
-    log("GOAL!");
-    playerScore++;
-    update(matchRef, {
-      [`scores/${playerId}`]: playerScore
-    });
+    const opponentId = Object.keys(data.players).find(id => id !== playerId);
 
-    if (playerScore >= 7) {
-      log("🏁 Game Over — You Win!");
+    // Handle special: Steal puck control
+    if (card.effect === "Gain puck control immediately") {
+      log("You stole the puck! It's your turn again.");
+      update(matchRef, { currentPlayer: playerId }).then(() => {
+        drawCard(playerId); // regain momentum
+      });
       return;
     }
 
-    passTurn(true);
-  } else {
-    log("No goal. Turn passes.");
-    passTurn();
-  }
+    // Check for opponent intercept defense card
+    if (card.type === "shot" && !data.disarmedPlayer?.includes?.(opponentId)) {
+      const opponentHand = data.hands?.[opponentId] || [];
+      const interceptIndex = opponentHand.findIndex(c => c.base === "intercept");
+
+      if (interceptIndex !== -1) {
+        const [interceptCard] = opponentHand.splice(interceptIndex, 1);
+        discardPile.push(interceptCard);
+        log(`Intercepted! Opponent used '${interceptCard.name}' to block your shot.`);
+
+        update(matchRef, {
+          [`hands/${opponentId}`]: opponentHand,
+          discardPile
+        });
+
+        passTurn();
+        return;
+      }
+    }
+
+    // Miss or invalid roll check
+    if (card.base === "miss" || roll > 12) {
+      log("Shot went out of bounds!");
+      passTurn();
+      return;
+    }
+
+    // Goal check
+    if (roll >= 3) {
+      log("GOAL!");
+      playerScore++;
+      update(matchRef, {
+        [`scores/${playerId}`]: playerScore
+      });
+
+      if (playerScore >= 7) {
+        log("🏁 Game Over — You Win!");
+        return;
+      }
+
+      passTurn(true);
+    } else {
+      log("No goal. Turn passes.");
+      passTurn();
+    }
+  });
 }
 
 function drawCard(targetPlayerId) {
@@ -254,13 +293,15 @@ function drawCard(targetPlayerId) {
 function passTurn() {
   get(matchRef).then(snapshot => {
     const data = snapshot.val();
-    const opponentId = Object.keys(data.players).find(id => id !== playerId);
+    const opponentId = getOpponentId();
     const nextPlayer = currentPlayer === playerId ? opponentId : playerId;
 
-    update(matchRef, {
-      currentPlayer: nextPlayer
-    }).then(() => {
-      // Draw card for next player AFTER turn has been set
+    const updates = {
+      currentPlayer: nextPlayer,
+      disarmedPlayer: null // reset disarm
+    };
+
+    update(matchRef, updates).then(() => {
       drawCard(nextPlayer);
     });
   });

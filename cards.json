@@ -137,4 +137,58 @@
     "base": "flip",
     "effect": "Blocks banked shots (doublebank, triplebank, LWO, etc.)"
   }
+  {
+    "name": "Tall Mallet",
+    "type": "special",
+    "base": "reach",
+    "effect": "Block high shots automatically for 1 turn"
+  },
+  {
+    "name": "Skinny Mallet",
+    "type": "special",
+    "base": "precision",
+    "effect": "Next shot gains +1 to roll but -1 on block attempts"
+  },
+  {
+    "name": "3D Printed Mallet Extender",
+    "type": "special",
+    "base": "gadget",
+    "effect": "Play an extra defense card this turn"
+  },
+  {
+    "name": "Puck Flip Strike",
+    "type": "special",
+    "base": "surprise",
+    "effect": "Flip top card of deck—if it's a shot, play it immediately"
+  },
+  {
+    "name": "Power Mallet",
+    "type": "special",
+    "base": "force",
+    "effect": "+2 to your next dice roll, but miss results in turnover"
+  },
+  {
+    "name": "Finesse Mallet",
+    "type": "special",
+    "base": "grace",
+    "effect": "Ignore one defense card this turn"
+  },
+  {
+    "name": "High Top",
+    "type": "special",
+    "base": "style",
+    "effect": "If you roll doubles, score 2 points instead of 1"
+  },
+  {
+    "name": "Low Top",
+    "type": "special",
+    "base": "grit",
+    "effect": "Opponent must reroll their next successful block"
+  },
+  {
+    "name": "Custom Mallet",
+    "type": "special",
+    "base": "wildcard",
+    "effect": "Treat this as any mallet-type card already in play"
+  }
 ]

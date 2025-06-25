@@ -107,4 +107,34 @@
     "base": "mimic",
     "effect": "Can copy any base shot card when revealed"
   }
+  {
+    "name": "BLOCK",
+    "type": "defense",
+    "base": "wall",
+    "effect": "Negates a shot if dice roll is 6 or less"
+  },
+  {
+    "name": "DEFLECT",
+    "type": "defense",
+    "base": "redirect",
+    "effect": "Redirects shot to sideboard—no goal scored"
+  },
+  {
+    "name": "GLIDEBLOCK",
+    "type": "defense",
+    "base": "glide",
+    "effect": "Cancels any 'drift' or 'stop-and-go' effects"
+  },
+  {
+    "name": "CATCH",
+    "type": "defense",
+    "base": "snag",
+    "effect": "Catches puck cleanly—gain immediate possession"
+  },
+  {
+    "name": "MALLETFLIP",
+    "type": "defense",
+    "base": "flip",
+    "effect": "Blocks banked shots (doublebank, triplebank, LWO, etc.)"
+  }
 ]

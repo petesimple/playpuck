@@ -261,6 +261,16 @@ function resolvePlay(card, roll) {
         [`scores/${playerId}`]: playerScore
       });
 
+// Time Delay effect — limit opponent's draws next turn
+if (card.effect === "Opponent draws 1 less card next turn") {
+  log("You slowed them down! Opponent will draw 1 less card next turn.");
+  update(matchRef, {
+    delayedPlayer: opponentId
+  });
+  passTurn();
+  return;
+}
+      
       if (playerScore >= 7) {
         log("🏁 Game Over — You Win!");
         return;
@@ -285,8 +295,16 @@ function drawCard(targetPlayerId) {
     const hand = hands[targetPlayerId] || [];
 
     // ⛔ Enforce max hand size
-    if (hand.length >= 3) return;
+    // Allow draw up to 3 normally, or only 2 if player is delayed
+const isDelayed = data.delayedPlayer === targetPlayerId;
+const maxHandSize = isDelayed ? 2 : 3;
 
+if (hand.length >= maxHandSize) return;
+
+if (isDelayed) {
+  update(matchRef, { delayedPlayer: null });
+}
+    
     // ♻️ If deck is empty, reshuffle discard pile
     if (currentDeck.length === 0 && currentDiscard.length > 0) {
       currentDeck = shuffle(currentDiscard);
@@ -311,6 +329,9 @@ function drawCard(targetPlayerId) {
     }
   });
 }
+
+function getOpponentId() {
+  return Object.keys(data.players).find(id => id !== playerId);
 
 function passTurn() {
   get(matchRef).then(snapshot => {

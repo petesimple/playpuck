@@ -194,6 +194,14 @@ function resolvePlay(card, roll) {
 
     const opponentId = Object.keys(data.players).find(id => id !== playerId);
 
+    // Timeout card: end turn, draw 1 extra card
+    if (card.effect === "End your turn and draw 1 extra card") {
+      log("Timeout! You rest and draw a card.");
+      drawCard(playerId);
+      passTurn();
+      return;
+    }
+
     // Disarm opponent — block their defense cards for next turn
     if (card.effect === "Opponent cannot play defense card this turn") {
       log("You disarmed your opponent — they can't block your next shot!");

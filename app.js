@@ -188,24 +188,34 @@ function rollDice() {
 }
 
 function resolvePlay(card, roll) {
-  // Get the latest match data to evaluate effects
   get(matchRef).then(snapshot => {
     const data = snapshot.val();
     if (!data) return;
 
     const opponentId = Object.keys(data.players).find(id => id !== playerId);
 
-    // Handle special: Steal puck control
+    // Disarm opponent — block their defense cards for next turn
+    if (card.effect === "Opponent cannot play defense card this turn") {
+      log("You disarmed your opponent — they can't block your next shot!");
+      update(matchRef, {
+        disarmedPlayer: opponentId
+      });
+      passTurn();
+      return;
+    }
+
+    // Steal effect
     if (card.effect === "Gain puck control immediately") {
       log("You stole the puck! It's your turn again.");
       update(matchRef, { currentPlayer: playerId }).then(() => {
-        drawCard(playerId); // regain momentum
+        drawCard(playerId);
       });
       return;
     }
 
-    // Check for opponent intercept defense card
-    if (card.type === "shot" && !data.disarmedPlayer?.includes?.(opponentId)) {
+    // Check for opponent defense card unless disarmed
+    const isDisarmed = data.disarmedPlayer === opponentId;
+    if (card.type === "shot" && !isDisarmed) {
       const opponentHand = data.hands?.[opponentId] || [];
       const interceptIndex = opponentHand.findIndex(c => c.base === "intercept");
 
@@ -216,7 +226,8 @@ function resolvePlay(card, roll) {
 
         update(matchRef, {
           [`hands/${opponentId}`]: opponentHand,
-          discardPile
+          discardPile,
+          disarmedPlayer: null
         });
 
         passTurn();
@@ -224,14 +235,17 @@ function resolvePlay(card, roll) {
       }
     }
 
-    // Miss or invalid roll check
+    // Clear disarmed status (if it applied for this turn)
+    if (data.disarmedPlayer) {
+      update(matchRef, { disarmedPlayer: null });
+    }
+
     if (card.base === "miss" || roll > 12) {
       log("Shot went out of bounds!");
       passTurn();
       return;
     }
 
-    // Goal check
     if (roll >= 3) {
       log("GOAL!");
       playerScore++;

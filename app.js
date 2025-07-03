@@ -332,6 +332,7 @@ if (isDelayed) {
 
 function getOpponentId() {
   return Object.keys(data.players).find(id => id !== playerId);
+}
 
 function passTurn() {
   get(matchRef).then(snapshot => {
